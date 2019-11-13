@@ -7,7 +7,8 @@
  * ###########################################################
  */
 
-function gp_init_inline_edit(area_id, section_object) { 
+
+function gp_init_inline_edit(area_id, section_object){ 
 
   $gp.LoadStyle( YouTubeEmbed.base + '/YouTubeEmbed_edit.css' );
   gp_editing.editor_tools();
@@ -706,7 +707,15 @@ function gp_init_inline_edit(area_id, section_object) {
   gp_editor.applyEmbedCode = function(){
     gp_editor.embedCode = gp_editor.ui.embed_code.val();
     gp_editor.edit_div.find("iframe").remove();
-    gp_editor.edit_div.find(".youtube-embed-player").append(gp_editor.embedCode);
+    var $new_iframe = $(gp_editor.embedCode);
+    var new_src = $new_iframe.attr('src');
+    if( new_src && new_src.indexOf('enablejsapi') == -1 ){
+      new_src += (new_src.indexOf('?') == -1) ? '?enablejsapi=1' : '&enablejsapi=1';
+      $new_iframe.attr('src', new_src);
+    }
+    gp_editor.edit_div.find(".youtube-embed-player").append($new_iframe);
+    var html = $new_iframe[0].outerHTML;
+    gp_editor.ui.embed_code.val(html);
     gp_editor.isDirty = true;
   }; /* fnc gp_editor.applyEmbedCode --end */
 
@@ -1025,11 +1034,10 @@ function gp_init_inline_edit(area_id, section_object) {
     }
     */
     var the_iframe = gp_editor.edit_div.find("iframe");
-    the_iframe.attr("id", 'YTE_'+Date.now());    
-    the_iframe.attr("title", 'Video_'+gp_editor.video);    
-    var new_src = '//www.youtube.com/embed' + (gp_editor.video ? '/'+gp_editor.video : '');
+    the_iframe.attr("title", 'Video_' + gp_editor.video);    
+    var new_src = 'https://www.youtube.com/embed' + (gp_editor.video ? '/'+gp_editor.video : '') + '?enablejsapi=1';
     if( !$.isEmptyObject(params) ){
-      new_src += "?enablejsapi=1&" + $.param(params);
+      new_src += "&" + $.param(params);
     }
     the_iframe.attr("src", new_src);
     if( gp_editor.YouTubeParams.fs == "1" ){
@@ -1040,37 +1048,8 @@ function gp_init_inline_edit(area_id, section_object) {
     gp_editor.ui.embed_code.val(the_iframe[0].outerHTML.replace(/\&amp;/g,"&"));
     
     gp_editor.isDirty = true;
-    
-    // console.log("params: " , params);
-    // console.log("params.length: " , params.length);
-    // console.log("$.param: " + $.param(params));
-    // console.log("new_src: " + new_src);
 
   }; /* fnc gp_editor.setYouTubeParams --end */
-
-
-
-  /*
-  gp_editor.qs2JSON = function(qs){
-    var pairs = qs.split('&');
-    var result = {};
-    pairs.forEach(function(pair){
-      var pair = pair.split('=');
-      var key = pair[0];
-      var value = decodeURIComponent(pair[1] || '');
-      if( result[key] ){
-        if( Object.prototype.toString.call(result[key]) === '[object Array]' ){
-          result[key].push(value);
-        }else{
-          result[key] = [result[key], value];
-        }
-      }else{
-        result[key] = value;
-      }
-    });
-    return JSON.parse(JSON.stringify(result));
-  };
-  */
 
 
 
@@ -1081,7 +1060,6 @@ function gp_init_inline_edit(area_id, section_object) {
   var isDefaultContent = gp_editor.getEmbedCode(false); 
   gp_editor.getSize();
   gp_editor.getYouTubeParams();
-
 
 
   /* --- RENDER EDITOR AREA --- */
